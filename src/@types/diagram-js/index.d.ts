@@ -1,12 +1,12 @@
 declare module 'diagram-js' {
   import { Service, ServiceName } from 'bpmn-js';
   import { ViewerOptions } from 'diagram-js/lib/model';
-  import { DidiModule } from 'didi';
 
-  export type DJSModule = {
+  export interface DJSModule {
     __depends__?: DJSModule[];
     __init__?: any[];
-  } & DidiModule;
+    [id: string]: undefined | any[] | DJSModule[] | ['type' | 'factory' | 'value', any];
+  }
 
   export default class Diagram {
     constructor(options?: ViewerOptions, injector?: any);
@@ -30,6 +30,7 @@ declare module 'diagram-js' {
 /// Models
 
 declare module 'diagram-js/lib/model' {
+  import { DJSModule } from 'diagram-js';
   import { KeyboardConfig } from 'diagram-js/lib/features/keyboard/Keyboard';
   import { KeyboardMoveConfig } from 'diagram-js/lib/navigation/keyboard-move/KeyboardMove';
   import { Descriptor } from 'moddle/lib/descriptor-builder';
@@ -55,8 +56,9 @@ declare module 'diagram-js/lib/model' {
     $descriptor: Descriptor;
     $attrs: any;
     $parent: ModdleElement;
-    $instanceOf: (type: string) => boolean;
+    $instanceOf: ((type: string) => boolean) & ((element: Base, type: string) => boolean);
 
+    di?: ModdleElement;
     [field: string]: any;
 
     static hasType(element: ModdleElement, type?: string): boolean;
@@ -110,7 +112,7 @@ declare module 'diagram-js/lib/model' {
     height?: string | number;
     position?: string;
     deferUpdate?: boolean;
-    modules?: any[];
+    modules?: DJSModule[];
     additionalModules?: any[];
     moddleExtensions?: { [id: string]: any };
     propertiesPanel?: {
@@ -500,7 +502,7 @@ declare module 'diagram-js/lib/core/Canvas' {
   import ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
   import EventBus from 'diagram-js/lib/core/EventBus';
   import GraphicsFactory from 'diagram-js/lib/core/GraphicsFactory';
-  import { Base, Point, ViewerOptions } from 'diagram-js/lib/model';
+  import { Base, ModdleElement, Point, ViewerOptions } from 'diagram-js/lib/model';
 
   export default class Canvas {
     constructor(
@@ -510,7 +512,7 @@ declare module 'diagram-js/lib/core/Canvas' {
       elementRegistry: ElementRegistry
     );
 
-    addMarker(element: string | Base, marker: string): void;
+    addMarker(element: string | Base | ModdleElement, marker: string): void;
     removeMarker(element: string | Base, marker: string): void;
     hasMarker(element: string | Base, marker: string): void;
     toggleMarker(element: string | Base, marker: string): void;
@@ -904,6 +906,62 @@ declare module 'diagram-js/lib/features/connect/Connect' {
   }
 }
 
+// Text
+declare module 'diagram-js/lib/util/Text' {
+  export default class Text {
+    constructor(config?: TextConfig);
+
+    createText(text: string, options: Options): SVGElement;
+    getDimensions(text: string, options: Options): Dimensions;
+    layoutText(): Layout;
+  }
+
+  export interface Options {
+    box?: {
+      x: number;
+      y: number;
+      width?: number;
+      height?: number;
+    };
+    fitBox?: boolean;
+    padding?: number;
+    style?: any;
+    align?: string;
+  }
+
+  export interface TextConfig {
+    size?: number;
+    padding?: number;
+    style?: any;
+    align?: string;
+  }
+
+  export interface Layout {
+    dimensions: Dimensions;
+    element: Element;
+  }
+
+  export interface Dimensions {
+    width: number;
+    height: number;
+  }
+}
+
+/// SvgTransformUtil
+
+declare module 'diagram-js/lib/util/SvgTransformUtil' {
+  export function transform(
+    gfx: SVGElement,
+    x: number,
+    y: number,
+    angle?: number,
+    amount?: number
+  ): void;
+  export function translate(gfx: SVGElement, x: number, y: number): void;
+  export function rotate(gfx: SVGElement, angle: number): void;
+  export function scale(gfx: SVGElement, amount: number): void;
+}
+
 /// Elements
 
 declare module 'diagram-js/lib/util/Elements' {
@@ -1242,5 +1300,6 @@ declare module 'diagram-js/lib/command/CommandStack' {
     constructor(eventBus: EventBus, injector: Injector);
 
     execute(command: string, context: any): void;
+    registerHandler(command: string, handlerCls: new (...args: any[]) => any): void;
   }
 }

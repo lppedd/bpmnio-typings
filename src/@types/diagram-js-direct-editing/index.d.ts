@@ -1,5 +1,9 @@
 declare module 'diagram-js-direct-editing' {
+  import { DJSModule } from 'diagram-js';
   import { Base } from 'diagram-js/lib/model';
+
+  const directEditingModule: DJSModule;
+  export default directEditingModule;
 
   export interface DirectEditingProvider {
     activate(element: Base): BoundContext | undefined;

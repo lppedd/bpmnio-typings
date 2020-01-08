@@ -462,6 +462,24 @@ declare module 'bpmn-js/lib/Modeler' {
   }
 }
 
+declare module 'bpmn-js/lib/util/LabelUtil' {
+  import { Base } from 'diagram-js/lib/model';
+  import { BpmnElement } from 'moddle/lib/moddle';
+
+  export function isLabelExternal(element: Base): boolean;
+  export function hasExternalLabel(element: Base): boolean;
+  export function getExternalLabelMid(element: Base): { x: number; y: number };
+  export function getExternalLabelBounds(semantic: BpmnElement, element: Base): Bounds;
+  export function isLabel(element?: Base): boolean;
+
+  export interface Bounds {
+    x: number;
+    y: number;
+    width?: number;
+    height?: number;
+  }
+}
+
 declare module 'bpmn-js/lib/util/ModelUtil' {
   import { Base, ModdleElement } from 'diagram-js/lib/model';
   import { BpmnElement, BpmnElementType } from 'moddle/lib/moddle';

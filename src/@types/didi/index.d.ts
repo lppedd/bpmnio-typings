@@ -4,6 +4,6 @@ declare module 'didi' {
   }
 
   export interface DidiModule {
-    [id: string]: ['type', 'factory', 'value', any];
+    [id: string]: ['type' | 'factory' | 'value', any];
   }
 }

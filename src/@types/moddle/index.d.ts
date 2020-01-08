@@ -51,7 +51,7 @@ declare module 'moddle/lib/moddle' {
     | 'bpmn:Participant'
     | 'bpmn:StartEvent';
 
-  export type BpmnElement<T extends string> = BpmnElementMap extends Record<T, infer E>
+  export type BpmnElement<T extends string = ''> = BpmnElementMap extends Record<T, infer E>
     ? E
     : ModdleElement;
 
