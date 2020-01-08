@@ -7,11 +7,12 @@ declare module 'moddle/lib/moddle' {
     BpmnDefinitions,
     BpmnDocumentation,
     BpmnExtensionElements,
+    BpmnParticipant,
     BpmnRelationship,
     BpmnStartEvent,
-    ModdleElement
   } from 'bpmn-js';
   import { Attributes } from 'diagram-js/lib/core/ElementFactory';
+  import { ModdleElement } from 'diagram-js/lib/model';
   import { Descriptor } from 'moddle/lib/descriptor-builder';
 
   export default class Moddle {
@@ -47,19 +48,23 @@ declare module 'moddle/lib/moddle' {
     | 'bpmn:Documentation'
     | 'bpmn:Definitions'
     | 'bpmn:Relationship'
+    | 'bpmn:Participant'
     | 'bpmn:StartEvent';
 
-  type BpmnElement<T extends string> = BpmnElementMap extends Record<T, infer E>
+  export type BpmnElement<T extends string> = BpmnElementMap extends Record<T, infer E>
     ? E
     : ModdleElement;
 
-  type ModdleElementCtor<T extends string> = new (attrs?: Attributes) => BpmnElement<T>;
+  export type ModdleElementCtor<T extends string> = new (
+    attrs?: Attributes
+  ) => BpmnElement<T>;
 
-  interface BpmnElementMap {
+  export interface BpmnElementMap {
     'bpmn:ExtensionElements': BpmnExtensionElements;
     'bpmn:Documentation': BpmnDocumentation;
     'bpmn:Definitions': BpmnDefinitions;
     'bpmn:Relationship': BpmnRelationship;
+    'bpmn:Participant': BpmnParticipant;
     'bpmn:StartEvent': BpmnStartEvent;
   }
 }

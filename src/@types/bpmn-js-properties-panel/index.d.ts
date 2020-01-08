@@ -1,6 +1,6 @@
 declare module 'bpmn-js-properties-panel/lib/PropertiesActivator' {
-  import { Base, ModdleElement } from 'bpmn-js';
   import EventBus from 'diagram-js/lib/core/EventBus';
+  import { Base, ModdleElement } from 'diagram-js/lib/model';
 
   export default class PropertiesActivator {
     constructor(eventBus: EventBus, priority?: number);
@@ -39,8 +39,8 @@ declare module 'bpmn-js-properties-panel/lib/PropertiesActivator' {
 }
 
 declare module 'bpmn-js-properties-panel/lib/factory/EntryFactory' {
-  import { Base, ModdleElement } from 'bpmn-js';
   import { Entry } from 'bpmn-js-properties-panel/lib/PropertiesActivator';
+  import { Base, ModdleElement } from 'diagram-js/lib/model';
 
   export default class EntryFactory {
     static textField(options: TextOptions): Entry;
@@ -72,7 +72,6 @@ declare module 'bpmn-js-properties-panel/lib/factory/EntryFactory' {
       currentObject?: ModdleElement;
       objectsToAdd?: any;
       objectsToRemove?: any;
-      ny;
       updatedObjectList?: any[];
       propertyName?: string;
       referencePropertyName?: string;
@@ -84,8 +83,8 @@ declare module 'bpmn-js-properties-panel/lib/factory/EntryFactory' {
     id: string;
     description?: string;
     label?: string;
-    get?: (element: Element, node) => { formKey: any };
-    set?: (element: Element, values, node /* opt */) => Command;
+    get?: (element: Element, node: any) => { formKey: any };
+    set?: (element: Element, values: any, node: any /* opt */) => Command;
     validate?: (element: Element, values: { [k: string]: any }) => any;
     modelProperty?: string;
   }
@@ -105,16 +104,16 @@ declare module 'bpmn-js-properties-panel/lib/factory/EntryFactory' {
       method: () => any;
     };
     disabled?: (element: Element) => boolean;
-    hidden?: (element: Element, node /* opt */) => { formKey: any };
+    hidden?: (element: Element, node: any /* opt */) => { formKey: any };
   }
 
   export interface CheckBoxOptions extends Options {
     disabled?: (element: Element) => boolean;
-    hidden?: (element: Element, node /* opt */) => { formKey: any };
+    hidden?: (element: Element, node: any /* opt */) => { formKey: any };
   }
 
   export interface TextBoxOptions extends Options {
-    show?: (element: Element, node) => boolean;
+    show?: (element: Element, node: any) => boolean;
   }
 
   export interface SelectBoxOptions extends Options {
@@ -124,7 +123,7 @@ declare module 'bpmn-js-properties-panel/lib/factory/EntryFactory' {
     }[];
     emptyParameter?: boolean;
     disabled?: (element: Element) => boolean;
-    hidden?: (element: Element, node /* opt */) => { formKey: any };
+    hidden?: (element: Element, node: any /* opt */) => { formKey: any };
   }
 
   export interface ComboBoxOptions extends Options {
@@ -142,26 +141,26 @@ declare module 'bpmn-js-properties-panel/lib/factory/EntryFactory' {
     modelProperties: string[];
     labels: string[];
     addLabel: string;
-    getElements: (element: Element, node) => ModdleElement[];
-    addElement: (element: Element, node) => Command | Command[];
+    getElements: (element: Element, node: any) => ModdleElement[];
+    addElement: (element: Element, node: any) => Command | Command[];
     updateElement: (
       element: Element,
       value: any | null,
-      node,
+      node: any,
       idx: number
     ) => Command | Command[];
-    removeElement: (element: Element, node, idx: number) => Command | Command[];
-    show?: (element: Element, node) => boolean;
+    removeElement: (element: Element, node: any, idx: number) => Command | Command[];
+    show?: (element: Element, node: any) => boolean;
   }
 
   export interface LabelOptions extends Options {
     labelText?: string;
     divider?: boolean;
-    showLabel?: (element: Element, node) => boolean;
+    showLabel?: (element: Element, node: any) => boolean;
   }
 
   export interface LinkOptions extends Options {
-    handleClick: (element: Element, node, event) => boolean;
-    showLink?: (element: Element, node) => boolean;
+    handleClick: (element: Element, node: any, event: any) => boolean;
+    showLink?: (element: Element, node: any) => boolean;
   }
 }

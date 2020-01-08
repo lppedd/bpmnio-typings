@@ -4,13 +4,15 @@
  * @author Edoardo Luppi
  */
 declare module 'bpmn-js' {
+  import Modeling from 'bpmn-js/lib/features/modeling/Modeling';
   import Diagram from 'diagram-js';
   import Canvas from 'diagram-js/lib/core/Canvas';
   import ElementFactory from 'diagram-js/lib/core/ElementFactory';
   import ElementRegistry from 'diagram-js/lib/core/ElementRegistry';
   import EventBus from 'diagram-js/lib/core/EventBus';
+  import DefaultRenderer from 'diagram-js/lib/draw/DefaultRenderer';
   import translate from 'diagram-js/lib/i18n/translate/translate';
-  import { Descriptor } from 'moddle/lib/descriptor-builder';
+  import { ModdleElement, Root, ViewerOptions } from 'diagram-js/lib/model';
   import Moddle from 'moddle/lib/moddle';
 
   export default class Viewer extends Diagram {
@@ -68,7 +70,7 @@ declare module 'bpmn-js' {
      * @param diagram ID or the diagram to open
      * @param done The completion callback
      */
-    open(diagram: BpmnDiDiagram | string, done?: DoneCallback);
+    open(diagram: BpmnDiDiagram | string, done?: DoneCallback): any;
     open(done: DoneCallback): void;
 
     /**
@@ -139,22 +141,6 @@ declare module 'bpmn-js' {
     detach(): void;
   }
 
-  export interface ViewerOptions {
-    container?: string | Element;
-    width?: string | number;
-    height?: string | number;
-    position?: string;
-    deferUpdate?: boolean;
-    modules?: any[];
-    additionalModules?: any[];
-    moddleExtensions?: { [k: string]: any };
-    propertiesPanel?: {
-      parent: string | Element;
-    };
-
-    [field: string]: any;
-  }
-
   export interface WriterOptions {
     format?: boolean;
     preamble?: boolean;
@@ -203,53 +189,6 @@ declare module 'bpmn-js' {
     type: ElementEvent;
   }
 
-  export interface Base {
-    id: string;
-    type: string;
-
-    /**
-     * Actual element that gets imported from BPMN 2.0 XML
-     * and serialized during export.
-     */
-    businessObject: BpmnBaseElement;
-    label: Label;
-    parent: Shape;
-    labels: Label[];
-    outgoingRefs: Connection[];
-    incomingRefs: Connection[];
-  }
-
-  export interface Point {
-    x: number;
-    y: number;
-    original?: Point;
-  }
-
-  export interface Connection extends Base {
-    source: Base;
-    target: Base;
-    waypoints?: Point[];
-  }
-
-  export interface Shape extends Base {
-    children: Base[];
-    host: Shape;
-    attachers: Shape[];
-    collapsed?: boolean;
-    hidden?: boolean;
-    width?: number;
-    height?: number;
-    x?: number;
-    y?: number;
-  }
-
-  export interface Root extends Shape {
-  }
-
-  export interface Label extends Shape {
-    labelTarget: Base;
-  }
-
   // prettier-ignore
   export type CallbackObject<T extends Event> =
     T extends ElementEvent | SaveEvent ? ElementObject : any;
@@ -260,7 +199,9 @@ declare module 'bpmn-js' {
     | 'elementRegistry'
     | 'canvas'
     | 'moddle'
-    | 'translate';
+    | 'modeling'
+    | 'translate'
+    | 'defaultRenderer';
 
   export type Service<T extends string> = ServiceMap extends Record<T, infer E> ? E : any;
 
@@ -270,6 +211,8 @@ declare module 'bpmn-js' {
     elementFactory: ElementFactory;
     canvas: Canvas;
     moddle: Moddle;
+    modeling: Modeling;
+    defaultRenderer: DefaultRenderer;
     translate: typeof translate;
   }
 
@@ -306,29 +249,6 @@ declare module 'bpmn-js' {
     isReference?: boolean;
   }
 
-  export abstract class ModdleBase {
-    $model: Moddle;
-    $descriptor: Descriptor;
-    $instanceOf: (element: ModdleElement, type?: string) => boolean;
-
-    get(name: string): any;
-
-    set(name: string, value: any): void;
-  }
-
-  export abstract class ModdleElement extends ModdleBase {
-    static $model: Moddle;
-    static $descriptor: Descriptor;
-
-    readonly $type: string;
-    $attrs: any;
-    $parent: ModdleElement;
-
-    [field: string]: any;
-
-    static hasType(element: ModdleElement, type?: string): boolean;
-  }
-
   export abstract class BpmnBaseElement extends ModdleElement {
     id: string;
     documentation?: BpmnDocumentation;
@@ -353,8 +273,7 @@ declare module 'bpmn-js' {
     readonly $type: 'bpmn:StartEvent';
   }
 
-  export class RootElement extends BpmnBaseElement {
-  }
+  export class RootElement extends BpmnBaseElement {}
 
   export class BpmnRelationship extends BpmnBaseElement {
     readonly $type: 'bpmn:Relationship';
@@ -362,6 +281,27 @@ declare module 'bpmn-js' {
     direction?: BpmnRelationshipDirection;
     source?: Element[];
     target?: Element[];
+  }
+
+  export interface BpmnInteractionNode {
+    incomingConversationLinks: BpmnConversationLink[];
+    outgoingConversationLinks: BpmnConversationLink[];
+  }
+
+  export class BpmnConversationLink extends BpmnBaseElement {
+    sourceRef: BpmnInteractionNode;
+    targetRef: BpmnInteractionNode;
+    name: string;
+  }
+
+  export interface BpmnParticipant extends BpmnBaseElement, BpmnInteractionNode {
+    readonly $type: 'bpmn:Participant';
+    type?: string;
+    name: string;
+    interfaceRef: any;
+    participantMultiplicity: any;
+    endPointRefs: any;
+    processRef: any;
   }
 
   export class BpmnDefinitions extends BpmnBaseElement {
@@ -400,8 +340,7 @@ declare module 'bpmn-js' {
     ownedElement: DiDiagramElement;
   }
 
-  export interface DiNode extends DiDiagramElement {
-  }
+  export interface DiNode extends DiDiagramElement {}
 
   export interface DiPlane extends DiNode {
     planeElement: DiDiagramElement[];
@@ -510,7 +449,8 @@ declare module 'bpmn-js' {
 }
 
 declare module 'bpmn-js/lib/Modeler' {
-  import Viewer, { DoneCallback, ViewerOptions } from 'bpmn-js';
+  import Viewer, { DoneCallback } from 'bpmn-js';
+  import { ViewerOptions } from 'diagram-js/lib/model';
 
   export default class Modeler extends Viewer {
     constructor(options?: ViewerOptions);
@@ -523,17 +463,129 @@ declare module 'bpmn-js/lib/Modeler' {
 }
 
 declare module 'bpmn-js/lib/util/ModelUtil' {
-  import { Base, ModdleElement } from 'bpmn-js';
+  import { Base, ModdleElement } from 'diagram-js/lib/model';
+  import { BpmnElement, BpmnElementType } from 'moddle/lib/moddle';
 
   /**
    * Is an element of the given BPMN type?
    */
-  export function is(element: Base | ModdleElement, type: string): boolean;
+  export function is<T extends BpmnElementType | string>(
+    element: ModdleElement,
+    type: T
+  ): element is BpmnElement<T>;
+  export function is<T extends BpmnElementType | string>(
+    element: Base,
+    type: T
+  ): element is Base & { businessObject: BpmnElement<T> };
 
   /**
    * Return the business object for a given element.
    */
   export function getBusinessObject(element: Base | ModdleElement): ModdleElement;
+}
+
+declare module 'bpmn-js/lib/draw/BpmnRenderer' {
+  import Canvas from 'diagram-js/lib/core/Canvas';
+  import EventBus from 'diagram-js/lib/core/EventBus';
+  import BaseRenderer from 'diagram-js/lib/draw/BaseRenderer';
+  import { Base, Connection, ModdleElement, Shape } from 'diagram-js/lib/model';
+
+  export default class BpmnRenderer extends BaseRenderer {
+    constructor(
+      config: any /* RendererOptions | null */,
+      eventBus: EventBus,
+      styles: any /* Styles */,
+      pathMap: any,
+      canvas: Canvas,
+      textRenderer: any,
+      rendererPriority?: number
+    );
+
+    canRender(element: Base | ModdleElement): boolean;
+    drawShape(parentGfx: SVGElement, element: Shape): SVGElement;
+    drawConnection(parentGfx: SVGElement, element: Connection): SVGGraphicsElement;
+    getShapePath(element: Shape): string;
+  }
+}
+
+declare module 'bpmn-js/lib/draw/TextRenderer' {
+  import { Bounds } from 'diagram-js/lib/features/rules/RuleProvider';
+
+  export default class TextRenderer {
+    constructor(config: any);
+
+    getExternalLabelBounds(bounds: Bounds, text: string): Bounds;
+    getTextAnnotationBounds(bounds: Bounds, text: string): Bounds;
+    createText(text: string, options?: any): SVGElement;
+    getDefaultStyle(): TextStyle;
+    getExternalStyle(): TextStyle;
+  }
+
+  export interface TextStyle {
+    fontFamily: string;
+    fontSize: number;
+    fontWeight: string;
+    lineHeight?: number;
+    [k: string]: any;
+  }
+}
+
+declare module 'bpmn-js/lib/draw/PathMap' {
+  export default class PathMap {
+    pathMap: { [id: string]: PathElement };
+    getRawPath(pathId: string): string;
+    getScaledPath(pathId: string, param: ScaleParams): string;
+  }
+
+  export interface PathElement {
+    d: string;
+    height?: number;
+    width?: number;
+    heightElements?: number[];
+    widthElements?: number[];
+  }
+
+  export interface ScaleParams {
+    xScaleFactor?: number;
+    yScaleFactor?: number;
+    containerWidth?: number;
+    containerHeight?: number;
+    position?: {
+      mx?: number;
+      my?: number;
+    };
+  }
+}
+
+declare module 'bpmn-js/lib/features/modeling/util/ModelingUtil' {
+  import { Base, ModdleElement } from 'diagram-js/lib/model';
+
+  function isAny(element: Base, types: string[]): boolean;
+
+  function getParent(element: Base, anyType: string | string[]): ModdleElement;
+}
+
+declare module 'bpmn-js/lib/features/modeling/Modeling' {
+  import ElementFactory from 'diagram-js/lib/core/ElementFactory';
+  import EventBus from 'diagram-js/lib/core/EventBus';
+  import { Base } from 'diagram-js/lib/model';
+
+  export default class Modeling {
+    constructor(
+      eventBus: EventBus,
+      elementFactory: ElementFactory,
+      commandStack: any,
+      bpmnRules: any
+    );
+
+    setColor(elements: Base[] /* KV */, colors?: Colors): void;
+    updateProperties(element: Base, properties: any): void;
+  }
+
+  export interface Colors {
+    fill?: string;
+    stroke?: string;
+  }
 }
 
 declare module 'bpmn-js/lib/features/modeling/BpmnFactory' {
@@ -544,18 +596,16 @@ declare module 'bpmn-js/lib/features/modeling/BpmnFactory' {
     BpmnDiPlane,
     BpmnDiShape,
     DcBounds,
-    DcPoint,
-    ModdleElement
+    DcPoint
   } from 'bpmn-js';
   import { Attributes } from 'diagram-js/lib/core/ElementFactory';
+  import { ModdleElement } from 'diagram-js/lib/model';
 
   export default class BpmnFactory {
     constructor(moddle: any);
 
     create(type: string | object, attrs: Attributes): ModdleElement;
-
     createDiLabel(): BpmnDiLabel;
-
     createDiShape(
       semantic: BpmnBaseElement,
       bounds: object,
@@ -563,17 +613,84 @@ declare module 'bpmn-js/lib/features/modeling/BpmnFactory' {
     ): BpmnDiShape;
 
     createDiBounds(bounds: object): DcBounds;
-
     createDiWaypoints(waypoints: DcPoint[]): DcPoint[];
-
     createDiWaypoint(point: DcPoint): DcPoint;
-
     createDiEdge(
       semantic: BpmnBaseElement,
       waypoints: DcPoint[],
       attrs: Attributes
     ): BpmnDiEdge;
-
     createDiPlane(semantic: BpmnBaseElement): BpmnDiPlane;
   }
+}
+
+declare module 'bpmn-js/lib/features/palette/PaletteProvider' {
+  import ElementFactory from 'diagram-js/lib/core/ElementFactory';
+  import Create from 'diagram-js/lib/features/create/Create';
+  import GlobalConnect from 'diagram-js/lib/features/global-connect/GlobalConnect';
+  import HandTool from 'diagram-js/lib/features/hand-tool/HandTool';
+  import LassoTool from 'diagram-js/lib/features/lasso-tool/LassoTool';
+  import Palette, {
+    PaletteEntryDescriptor
+  } from 'diagram-js/lib/features/palette/Palette';
+  import SpaceTool from 'diagram-js/lib/features/space-tool/SpaceTool';
+  import { TranslateFn } from 'diagram-js/lib/i18n/translate/translate';
+
+  export default class PaletteProvider {
+    constructor(
+      palette: Palette,
+      create: Create,
+      elementFactory: ElementFactory,
+      spaceTool: SpaceTool,
+      lassoTool: LassoTool,
+      handTool: HandTool,
+      globalConnect: GlobalConnect,
+      translate: TranslateFn
+    );
+
+    getPaletteEntries(element: any): { [id: string]: PaletteEntryDescriptor };
+  }
+}
+
+declare module 'bpmn-js/lib/features/context-pad/ContextPadProvider' {
+  import ElementFactory from 'diagram-js/lib/core/ElementFactory';
+  import { ContextPadEntryDescriptor } from 'diagram-js/lib/features/context-pad/ContextPad';
+  import Create from 'diagram-js/lib/features/create/Create';
+  import GlobalConnect from 'diagram-js/lib/features/global-connect/GlobalConnect';
+  import HandTool from 'diagram-js/lib/features/hand-tool/HandTool';
+  import LassoTool from 'diagram-js/lib/features/lasso-tool/LassoTool';
+  import Palette from 'diagram-js/lib/features/palette/Palette';
+  import SpaceTool from 'diagram-js/lib/features/space-tool/SpaceTool';
+  import { TranslateFn } from 'diagram-js/lib/i18n/translate/translate';
+
+  export default class ContextPadProvider {
+    constructor(
+      palette: Palette,
+      create: Create,
+      elementFactory: ElementFactory,
+      spaceTool: SpaceTool,
+      lassoTool: LassoTool,
+      handTool: HandTool,
+      globalConnect: GlobalConnect,
+      translate: TranslateFn
+    );
+
+    getContextPadEntries(element: any): { [id: string]: ContextPadEntryDescriptor };
+  }
+}
+
+/// Snapping
+
+declare module 'bpmn-js/lib/features/snapping' {
+  import { DJSModule } from 'diagram-js';
+
+  const snappingModule: DJSModule;
+  export default snappingModule;
+}
+
+declare module 'bpmn-js/lib/features/label-editing/LabelUtil' {
+  import { Base } from 'diagram-js/lib/model';
+
+  export function getLabel(element: Base): string;
+  export function setLabel(element: Base, text: string, isExternal?: boolean): Base;
 }
