@@ -4,26 +4,42 @@
  * @author Edoardo Luppi
  */
 declare module 'bpmn-js-cli' {
-  export { Cli, Initializer } from 'bpmn-js-cli/lib';
+  import cliModule from 'bpmn-js-cli/lib';
+
+  export default cliModule;
 }
 
 declare module 'bpmn-js-cli/lib' {
-  import { Connection, Shape } from 'diagram-js/lib/model';
-  import { Injector } from 'didi';
+  import { DJSModule } from 'diagram-js';
 
   export interface Point {
     x: number;
     y: number;
   }
 
+  const cliModule: DJSModule;
+  export default cliModule;
+}
+
+declare module 'bpmn-js-cli/lib/Initializer' {
+  import Cli from 'bpmn-js-cli/lib/Cli';
+
   /**
    * The default CLI initializer that sets up available parsers and commands.
    *
    * @param cli The Cli object to initialize
    */
-  export function Initializer(cli: Cli): void;
+  export default class Initializer {
+    constructor(cli: Cli);
+  }
+}
 
-  export class Cli {
+declare module 'bpmn-js-cli/lib/Cli' {
+  import { Point } from 'bpmn-js-cli/lib';
+  import { Connection, Shape } from 'diagram-js/lib/model';
+  import { Injector } from 'didi';
+
+  export default class Cli {
     constructor(config: any, injector: Injector);
 
     append(source: string | Shape, type: string, delta: string | Point): string;
