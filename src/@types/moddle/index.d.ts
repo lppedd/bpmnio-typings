@@ -9,7 +9,7 @@ declare module 'moddle/lib/moddle' {
     BpmnExtensionElements,
     BpmnParticipant,
     BpmnRelationship,
-    BpmnStartEvent,
+    BpmnStartEvent
   } from 'bpmn-js';
   import { Attributes } from 'diagram-js/lib/core/ElementFactory';
   import { ModdleElement } from 'diagram-js/lib/model';
@@ -51,7 +51,10 @@ declare module 'moddle/lib/moddle' {
     | 'bpmn:Participant'
     | 'bpmn:StartEvent';
 
-  export type BpmnElement<T extends string = ''> = BpmnElementMap extends Record<T, infer E>
+  export type BpmnElement<T extends string = ''> = BpmnElementMap extends Record<
+    T,
+    infer E
+  >
     ? E
     : ModdleElement;
 

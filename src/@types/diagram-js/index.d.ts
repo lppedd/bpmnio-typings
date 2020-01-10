@@ -291,10 +291,10 @@ declare module 'diagram-js/lib/features/rules/RuleProvider' {
   }
 
   export interface Bounds {
-    height: number;
-    width: number;
-    x: number;
-    y: number;
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
   }
 
   interface Context {
